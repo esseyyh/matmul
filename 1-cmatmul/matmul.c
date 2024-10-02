@@ -10,7 +10,7 @@ void matmul(float *A,float *B,float *C, int i, int j , int k){
         for (int jj=0;jj<j;jj++){
             float value=0;
             for (int kk=0;kk<k;kk++){
-                value= A[ii * k  + kk ]  * B [j * kk + jj ];
+               value= A[ii * k  + kk ]  * B [j * kk + jj ];
             }
             C[ii * j +  jj ]=value;
 

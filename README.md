@@ -2,7 +2,7 @@
 
 
 ## CPU implement 
-1. naive c matmul
+1. naive c matmul       done 
 2. strassen algorithm
 3. single thread optim
     tiling
