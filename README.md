@@ -1,4 +1,6 @@
-# matmul
+# Matmul implementations in c and cude to be used in htorch
+
+
 
 
 ## CPU implement 
