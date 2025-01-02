@@ -6,7 +6,7 @@
 void transpose(float *src, float *dst, int rows, int cols) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
-            dst[j * rows + i] = src[i * cols + j];
+            dst[j * rows + i] = src[i * cols + j];// dst[j,i] = src[i,j]
         }
     }
 }
@@ -26,7 +26,7 @@ void matmul(float *A, float *B_transposed, float *C, int M, int N, int K) {
 int main() {
     int sizes[][3] = {{128, 128, 128}, {512, 512, 512}, {1024, 1024, 1024}};
     int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
-    int num_iterations = 100;
+    int num_iterations = 3;
 
     srand(time(NULL));
 

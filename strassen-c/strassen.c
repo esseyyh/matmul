@@ -55,7 +55,6 @@ void strassen(float *A, float *B, float *C, int n) {
             A12[i * new_size + j] = A[i * n + j + new_size];
             A21[i * new_size + j] = A[(i + new_size) * n + j];
             A22[i * new_size + j] = A[(i + new_size) * n + j + new_size];
-
             B11[i * new_size + j] = B[i * n + j];
             B12[i * new_size + j] = B[i * n + j + new_size];
             B21[i * new_size + j] = B[(i + new_size) * n + j];
@@ -104,6 +103,8 @@ void strassen(float *A, float *B, float *C, int n) {
 }
 
 int main() {
+
+
     int sizes[][3] = {{128, 128, 128}, {512, 512, 512}, {1024, 1024, 1024}};
     int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
     int num_iterations = 5;
