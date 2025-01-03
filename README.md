@@ -10,8 +10,8 @@
     a.  tiling                      done
     b.  transpose                   done
     c.  vectorization               done
-    d.  prefetch 
-    e.  unrolling
+    d.  prefetch                    done 
+    e.  unrolling                   done    
 4. and finally multi threading
 
 ## GPU Implementation 
