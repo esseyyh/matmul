@@ -22,8 +22,6 @@ void matmul(float *A, float *B, float *C, int M, int N, int K, int TILE_SIZE) {
                         for (int kk = k; kk < k + TILE_SIZE && kk < K; kk+=16) {
 		            __m512 a = _mm512_loadu_ps(&A[ii * K + kk]);
 		            __m512 b = _mm512_loadu_ps(&B[jj * K + kk]);
-                            //__m512 a = _mm512_set1_ps(A[ii * K + kk]);
-                            //__m512 b = _mm512_set1_ps(B[jj * K + kk]);
                             acc = _mm512_fmadd_ps(a, b, acc);
                         }
                         float sum = _mm512_reduce_add_ps(acc);
