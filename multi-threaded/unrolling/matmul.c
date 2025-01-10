@@ -31,43 +31,46 @@ void *matmul_thread(void *arg) {
     for (int i = start_row; i < end_row; i += TILE_SIZE) {
         for (int j = 0; j < N; j += TILE_SIZE) {
             for (int k = 0; k < K; k += TILE_SIZE) {
-                for (int ii = i; ii < i + TILE_SIZE && ii < end_row; ii++) {
-                    for (int jj = j; jj < j + TILE_SIZE && jj < N; jj += 32) {
-                        __m512 sum0 = _mm512_setzero_ps();
-                        __m512 sum1 = _mm512_setzero_ps();
-                        __m512 sum2 = _mm512_setzero_ps();
-                        __m512 sum3 = _mm512_setzero_ps();
-                        
-                        for (int kk = k; kk < k + TILE_SIZE && kk < K; kk++) {
-                            __m512 a = _mm512_set1_ps(A[ii * K + kk]);
-                            __m512 b0 = _mm512_loadu_ps(&B[kk * N + jj]);
-                            __m512 b1 = _mm512_loadu_ps(&B[kk * N + (jj + 8 < N ? jj + 8 : jj)]);
-                            __m512 b2 = _mm512_loadu_ps(&B[kk * N + (jj + 16 < N ? jj + 16 : jj)]);
-                            __m512 b3 = _mm512_loadu_ps(&B[kk * N + (jj + 24 < N ? jj + 24 : jj)]);
-                            
-                            sum0 = _mm512_fmadd_ps(a, b0, sum0);
-                            sum1 = _mm512_fmadd_ps(a, b1, sum1);
-                            sum2 = _mm512_fmadd_ps(a, b2, sum2);
-                            sum3 = _mm512_fmadd_ps(a, b3, sum3);
-                        }
-                        
-                        _mm512_storeu_ps(&C[ii * N + jj], 
-                            _mm512_add_ps(_mm512_loadu_ps(&C[ii * N + jj]), sum0));
-                        
-                        if (jj + 8 < N) 
-                            _mm512_storeu_ps(&C[ii * N + jj + 8], 
-                                _mm512_add_ps(_mm512_loadu_ps(&C[ii * N + jj + 8]), sum1));
-                        
-                        if (jj + 16 < N) 
-                            _mm512_storeu_ps(&C[ii * N + jj + 16], 
-                                _mm512_add_ps(_mm512_loadu_ps(&C[ii * N + jj + 16]), sum2));
-                        
-                        if (jj + 24 < N) 
-                            _mm512_storeu_ps(&C[ii * N + jj + 24], 
-                                _mm512_add_ps(_mm512_loadu_ps(&C[ii * N + jj + 24]), sum3));
-                    }
-                }
-            }
+                 for (int ii = i; ii < i + TILE_SIZE && ii < end_row; ii += 4) {
+    for (int kk = k; kk < k + TILE_SIZE && kk < K; kk++) {
+        __m512 a0 = _mm512_set1_ps(A[ii * K + kk]);
+        __m512 a1 = _mm512_set1_ps(A[(ii + 1) * K + kk]);
+        __m512 a2 = _mm512_set1_ps(A[(ii + 2) * K + kk]);
+        __m512 a3 = _mm512_set1_ps(A[(ii + 3) * K + kk]);
+
+        for (int jj = j; jj < j + TILE_SIZE && jj < N; jj += 32) {
+            __m512 b0 = _mm512_loadu_ps(&B[kk * N + jj]);
+            __m512 b1 = _mm512_loadu_ps(&B[kk * N + jj + 16]);
+
+            __m512 c00 = _mm512_loadu_ps(&C[ii * N + jj]);
+            __m512 c01 = _mm512_loadu_ps(&C[ii * N + jj + 16]);
+            __m512 c10 = _mm512_loadu_ps(&C[(ii + 1) * N + jj]);
+            __m512 c11 = _mm512_loadu_ps(&C[(ii + 1) * N + jj + 16]);
+            __m512 c20 = _mm512_loadu_ps(&C[(ii + 2) * N + jj]);
+            __m512 c21 = _mm512_loadu_ps(&C[(ii + 2) * N + jj + 16]);
+            __m512 c30 = _mm512_loadu_ps(&C[(ii + 3) * N + jj]);
+            __m512 c31 = _mm512_loadu_ps(&C[(ii + 3) * N + jj + 16]);
+
+            c00 = _mm512_fmadd_ps(a0, b0, c00);
+            c01 = _mm512_fmadd_ps(a0, b1, c01);
+            c10 = _mm512_fmadd_ps(a1, b0, c10);
+            c11 = _mm512_fmadd_ps(a1, b1, c11);
+            c20 = _mm512_fmadd_ps(a2, b0, c20);
+            c21 = _mm512_fmadd_ps(a2, b1, c21);
+            c30 = _mm512_fmadd_ps(a3, b0, c30);
+            c31 = _mm512_fmadd_ps(a3, b1, c31);
+
+            _mm512_storeu_ps(&C[ii * N + jj], c00);
+            _mm512_storeu_ps(&C[ii * N + jj + 16], c01);
+            _mm512_storeu_ps(&C[(ii + 1) * N + jj], c10);
+            _mm512_storeu_ps(&C[(ii + 1) * N + jj + 16], c11);
+            _mm512_storeu_ps(&C[(ii + 2) * N + jj], c20);
+            _mm512_storeu_ps(&C[(ii + 2) * N + jj + 16], c21);
+            _mm512_storeu_ps(&C[(ii + 3) * N + jj], c30);
+            _mm512_storeu_ps(&C[(ii + 3) * N + jj + 16], c31);
+        }
+    }
+}            }
         }
     }
     return NULL;
