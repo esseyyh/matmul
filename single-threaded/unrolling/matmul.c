@@ -23,13 +23,15 @@ void matmul_blocked(float *A, float *B_transposed, float *C, int M, int N, int K
                 int max_j = (j0 + BLOCK_SIZE < N) ? j0 + BLOCK_SIZE : N;
                 int max_k = (k0 + BLOCK_SIZE < K) ? k0 + BLOCK_SIZE : K;
 
-                for (int i = i0; i < max_i - 3; i += 4) {
+                for (int i = i0; i < max_i - 5; i += 6) {
                     for (int k = k0; k < max_k; k++) {
                         __m512 a0 = _mm512_set1_ps(A[i * K + k]);
                         __m512 a1 = _mm512_set1_ps(A[(i + 1) * K + k]);
                         __m512 a2 = _mm512_set1_ps(A[(i + 2) * K + k]);
                         __m512 a3 = _mm512_set1_ps(A[(i + 3) * K + k]);
 
+                        __m512 a4 = _mm512_set1_ps(A[(i + 4) * K + k]);
+                        __m512 a5 = _mm512_set1_ps(A[(i + 5) * K + k]);
 
                         //__m256 a0 = _mm256_broadcast_ss(&A[i * K + k]);
                         //__m256 a1 = _mm256_broadcast_ss(&A[(i+1) * K + k]);
@@ -59,6 +61,12 @@ void matmul_blocked(float *A, float *B_transposed, float *C, int M, int N, int K
                                 __m512 c30 = _mm512_loadu_ps(&C[(i+3) * N + j]);
                                 __m512 c31 = _mm512_loadu_ps(&C[(i+3) * N + j+16]);
 
+                                __m512 c41 = _mm512_loadu_ps(&C[(i+4) * N + j+16]);
+                                __m512 c42 = _mm512_loadu_ps(&C[(i+4) * N + j+16]);
+                                
+                                __m512 c51 = _mm512_loadu_ps(&C[(i+5) * N + j+16]);
+                                __m512 c52 = _mm512_loadu_ps(&C[(i+5) * N + j+16]);
+
                             //__m256 b0 = _mm256_loadu_ps(&B_transposed[j * K + k]);
                             //__m256 b1 = _mm256_loadu_ps(&B_transposed[(j+8) * K + k]);
 
@@ -80,6 +88,11 @@ void matmul_blocked(float *A, float *B_transposed, float *C, int M, int N, int K
                             c30 = _mm512_fmadd_ps(a3, b0, c30);
                             c31 = _mm512_fmadd_ps(a3, b1, c31);
 
+                            c41 = _mm512_fmadd_ps(a4, b0, c30);
+                            c42 = _mm512_fmadd_ps(a4, b1, c30);
+                            c51 = _mm512_fmadd_ps(a5, b0, c31);
+                            c52 = _mm512_fmadd_ps(a5, b1, c31);
+                            
                             _mm512_storeu_ps(&C[i * N + j], c00);
                             _mm512_storeu_ps(&C[i * N + j + 16], c01);
                             _mm512_storeu_ps(&C[(i+1) * N + j], c10);
@@ -88,6 +101,11 @@ void matmul_blocked(float *A, float *B_transposed, float *C, int M, int N, int K
                             _mm512_storeu_ps(&C[(i+2) * N + j + 16], c21);
                             _mm512_storeu_ps(&C[(i+3) * N + j], c30);
                             _mm512_storeu_ps(&C[(i+3) * N + j + 16], c31);
+
+                            _mm512_storeu_ps(&C[(i+4) * N + j], c41);
+                            _mm512_storeu_ps(&C[(i+4) * N + j + 16], c42);
+                            _mm512_storeu_ps(&C[(i+5) * N + j], c51);
+                            _mm512_storeu_ps(&C[(i+5) * N + j + 16], c52);
                         }
                     }
                 }
