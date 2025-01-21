@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
                 double elapsed_time = end_time - start_time;
                 double flops = 2.0 * sizes[i][0] * sizes[i][1] * sizes[i][2];
                 double gflops = flops / (elapsed_time * 1e9);
-                printf("%d,%d,%d,%d,%d,%.6f,%.10f\n", size,sizes[i][1], sizes[i][1],sizes[i][1],elapsed_time, gflops);
+                printf("%d,%d,%d,%d,%.6f,%.10f\n", size,sizes[i][0], sizes[i][1],sizes[i][2],elapsed_time, gflops);
         }
         //};
         MPI_Gatherv(local_C, rows_per_proc * sizes[i][2],MPI_FLOAT,C, sendcounts, displs, MPI_FLOAT, 0,MPI_COMM_WORLD);

@@ -14,8 +14,8 @@
     }                                                                          \
   } while (0)
 
-#define NUM_REPETITIONS 5
-#define TILE_SIZE 16
+#define NUM_REPETITIONS 1
+#define TILE_SIZE 64
 
 __global__ void matmul_kernel_tiled(float *A, float *B, float *C, int M, int N,
                                     int K) {
@@ -47,9 +47,27 @@ __global__ void matmul_kernel_tiled(float *A, float *B, float *C, int M, int N,
 
     __syncthreads();
 
-    for (int k = 0; k < TILE_SIZE; ++k) {
-      sum += A_shared[ty][k] * B_shared[k][tx];
+    float4 sum4 = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    for (int k = 0; k < TILE_SIZE; k += 4) {
+      // Load 4 consecutive elements from A_shared and B_shared into float4
+      float4 a_vec = *reinterpret_cast<float4 *>(&A_shared[ty][k]);
+      float4 b_vec = make_float4(B_shared[k][tx], B_shared[k + 1][tx],
+                                 B_shared[k + 2][tx], B_shared[k + 3][tx]);
+
+      // Perform element-wise multiplication and accumulate
+      sum4.x += a_vec.x * b_vec.x;
+      sum4.y += a_vec.y * b_vec.y;
+      sum4.z += a_vec.z * b_vec.z;
+      sum4.w += a_vec.w * b_vec.w;
     }
+
+    // Combine results from sum4 back into a scalar sum
+    sum += sum4.x + sum4.y + sum4.z + sum4.w;
+    // #pragma unroll
+    //    for (int k = 0; k < TILE_SIZE; ++k) {
+    //      sum += A_shared[ty][k] * B_shared[k][tx];
+    //    }
 
     __syncthreads();
   }
@@ -94,10 +112,10 @@ double get_time() {
 
 // main function
 int main(int argc, char *argv[]) {
-  int sizes[][3] = {{128, 128, 128},       {512, 512, 512},
-                    {1024, 1024, 1024},    {2048, 2048, 2048},
-                    {4096, 4096, 4096},    {8192, 8192, 8192},
-                    {16384, 16384, 16384}, {32768, 32768, 32768}};
+  int sizes[][3] = {{128, 128, 128},      {512, 512, 512},
+                    {1024, 1024, 1024},   {2048, 2048, 2048},
+                    {4096, 4096, 4096},   {8192, 8192, 8192},
+                    {16384, 16384, 16384}};
   int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
   srand(time(NULL));
 
@@ -129,10 +147,22 @@ int main(int argc, char *argv[]) {
     double min_time = DBL_MAX;
 
     for (int rep = 0; rep < NUM_REPETITIONS; rep++) {
-      double start_time = get_time();
+      // double start_time = get_time();
+
+      cudaEvent_t start, stop;
+      cudaEventCreate(&start);
+      cudaEventCreate(&stop);
+      cudaEventRecord(start);
+      cudaDeviceSynchronize();
       matmul(A, B, C, M, N, K);
-      double end_time = get_time();
-      double elapsed_time = end_time - start_time;
+      cudaEventRecord(stop);
+      cudaEventSynchronize(stop);
+      float elapsed_time_ms;
+      cudaEventElapsedTime(&elapsed_time_ms, start, stop);
+      double elapsed_time = elapsed_time_ms / 1000.0;
+
+      // double end_time = get_time();
+      // double elapsed_time = end_time - start_time;
 
       total_time += elapsed_time;
       if (elapsed_time < min_time) {
